@@ -13,7 +13,7 @@
     "socket.io-client": "2.3.0"
   },
   "devDependencies": {
-    "nodemon": "1.18.4"
+    "nodemon": "^3.0.1"
   },
   "keywords": [
     "example",
