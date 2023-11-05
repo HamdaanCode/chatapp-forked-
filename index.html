@@ -1,0 +1,364 @@
+<html>
+  <head>
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    function init(){
+      handleTextInput();
+      preventEnterRefresh();
+    }
+
+  </script>
+  <!-- init scripts -->
+  <script>
+    function getNumberOfOnlineUsers(){
+      let num = document.getElementById("current-users").getElementsByTagName("li").length;
+      console.log(document.getElementById("current-users").getElementsByTagName("li"))
+      document.getElementById("current-users-onlineusers").innerHTML = "Online Users (" + num/2 + ")";
+      return;
+    }
+  </script>
+
+  <script>
+    function preventEnterRefresh(){
+      document.getElementById("chat-form").addEventListener("submit", (e)=>{
+        e.preventDefault();
+      })
+    }
+  </script>
+  <!--
+  <script>
+      function test(){
+        if(!socket){
+          let socket = io();
+        }
+        document.getElementById("chat-form").addEventListener("submit", (e) =>{
+          e.preventDefault();
+          socket.emit("chat message", document.getElementById("chattextbox").value);
+          console.log(document.getElementById("chattextbox").value);
+          document.getElementById("chattextbox").value = ""
+          return false;
+      })
+    }
+  </script>
+  -->
+  <script>
+      function msgSubmit(){
+        if(document.getElementById("chattextbox").value===""){
+          return;
+        }else if(document.getElementById("chattextbox").value.includes("/")){
+          console.log("command");
+          handleTextboxCommand()
+          return;
+        }
+        
+        if(!socket){
+          let socket = io();
+        }
+          socket.emit("chat message", document.getElementById("chattextbox").value);
+          socket.emit("not typing");
+          console.log(document.getElementById("chattextbox").value);
+          document.getElementById("chattextbox").value = ""
+    }
+    // code that is triggered whenever choosing a room
+    function roomSelect(roomName){
+        console.log(roomName);
+        if(!socket){
+          let socket = io();
+        }
+        
+        //document.getElementById()
+        socket.emit("room select", roomName);
+        return;
+      }
+  </script>
+
+  <script>
+    function handleTextboxCommand(){
+      let element = document.getElementById("chattextbox");
+      let commands = ["/help","/setname"]
+      // changing username
+      if(element.value.includes("/setname")){
+        if(element.value.split(" ").length <= 1){
+          let li = document.createElement("li");
+          li.innerHTML = "<li class=\"connection-message\"><strong>INFO: /setname requires a name to set to (ex. /setname myUsername)</strong></li>";
+          document.getElementById("messages").appendChild(li);
+          
+        }else{
+          let tempArray = element.value.split(" ");
+          tempArray.shift();
+          let tempStr = tempArray.join();
+
+          //console.log(tempStr);
+          socket.emit("change username", tempStr); //tempstr is the username
+        }
+        
+      }else if(element.value.includes("/help")){
+        let li = document.createElement("li");
+        let i = 0;
+        li.innerHTML = "<li class=\"connection-message\"><strong>INFO: Current commands:"; 
+        for (let command of commands){
+          li.innerHTML += (i===commands.length-1 ? command : command + ", ");
+          i = i + 1;
+        }
+        li.innerHTML += "</strong></li>"
+        document.getElementById("messages").appendChild(li);
+      }else{
+        let li = document.createElement("li");
+        li.innerHTML = "<li class=\"connection-message\"><strong>INFO: Invalid command.</strong></li>"; // can prob create an innerhtml making function
+        document.getElementById("messages").appendChild(li);
+      }
+      socket.emit("not typing");
+      element.value = "" // clear textbox
+      document.getElementById("messages").scrollTop = document.getElementById("messages").scrollHeight - document.getElementById("messages").clientHeight;
+    }
+  </script>
+
+  <script>
+    function handleTextInput(){ //this creates multiple listeners, fix this 
+      let typingTimer;
+      if(!socket){
+          let socket = io();
+      }
+      document.getElementById("chattextbox").addEventListener("keyup", ()=>{
+        clearTimeout(typingTimer)
+        socket.emit("typing");
+        typingTimer = setTimeout(()=>{
+          socket.emit("not typing");
+        }, 5000)
+      })
+      
+    }
+  </script>
+
+  <!--
+    code for adding messages to ul
+  -->
+  <script>
+    let socket = io();
+    let socketString = "";
+    socket.on("chat message", function(msg, newUser) {
+      generateUserMessage(msg, newUser);
+    });
+    
+    socket.on("typing", function(newUser, currentTypers){
+      // loop through currentTypers array, but fix the multiple listener issue beforehand
+      /*if(!socketString.includes(socketID)){
+        for(let i = 0; i<currentTypers.length; i++){
+          if(i === currentTypers.length-1) {
+            if(currentTypers.length > 1){
+              socketString = socketString.concat("and ", currentTypers[i]);
+            }else{
+              socketString = currentTypers[i];
+            }
+          }else{
+            socketString = socketString.concat(currentTypers[i], ", "); 
+          }
+          console.log(currentTypers)
+        }
+      }*/
+      let strToConcat = (newUser.name ? newUser.name : newUser.id);
+      if(!socketString.includes(strToConcat)){
+        if(currentTypers.length > 1){
+          socketString = socketString.concat(", ", strToConcat); // find a way to add "and" case
+        }else{
+          socketString = strToConcat;
+        }
+        console.log(currentTypers);
+      }
+      
+      if(currentTypers.length===0){
+        document.getElementById("typing-div").innerHTML = "</br>";  
+      }else if(currentTypers.length >1){
+        document.getElementById("typing-div").innerHTML = socketString + " are typing...";
+      }else{
+        document.getElementById("typing-div").innerHTML = socketString + " is typing...";
+      }  
+    });
+
+    socket.on("not typing", (newUser, currentTypers) =>{
+      let strToConcat = (newUser.name ? newUser.name : newUser.id)
+      socketString = ""
+      
+      if(!socketString.includes(strToConcat)){
+        if(currentTypers.length > 1){
+          socketString = socketString.concat(", ", strToConcat);
+        }else{
+          socketString = strToConcat;
+        }
+        console.log(currentTypers);
+      }
+
+      if(currentTypers.length===0){
+        document.getElementById("typing-div").innerHTML = "</br>";  
+      }else if(currentTypers.length >1){
+        document.getElementById("typing-div").innerHTML = socketString + " are typing...";
+      }else{
+        document.getElementById("typing-div").innerHTML = socketString + " is typing...";
+      }
+    });
+
+    socket.on("update users list", (currentUsers) =>{
+      // clear ul
+      document.getElementById("current-users").innerHTML = "<span id=\"current-users-onlineusers\" style=\"font-weight: bold\">Online Users</span>";
+      
+      for(let i = 0; i<currentUsers.length; i++){
+        //console.log("currentusers.length:" + currentUsers.length)
+        let li = document.createElement("li");
+        li.innerHTML = "<li>"+(currentUsers[i].name ? currentUsers[i].name : currentUsers[i].id)+"</li>"
+        document.getElementById("current-users").appendChild(li);
+      }
+      // showing a notification when a new user joins stalls the program???
+      getNumberOfOnlineUsers();
+    });
+
+    socket.on("user join", (newUser) => {
+      generateUserJoin(newUser);
+    })
+
+    socket.on("user leave", (newUser) => {
+      generateUserLeave(newUser);
+    })
+
+    socket.on("user changed name", (newUser)=> {
+      generateUserChangedName(newUser);
+    })
+
+    socket.on("room join", (newUser, roomName)=>{
+      generateRoomJoinMessage(newUser, roomName)
+    })
+
+    socket.on("send chat history", (chatHistory)=>{
+      // chatHistory should be ordered from oldest to newest
+      for (let element of chatHistory){
+        switch(element.event){
+          case "user join":
+            generateUserJoin(element.newUser, element.time);
+            break;
+          case "user leave":
+            generateUserLeave(element.newUser, element.time);
+            break;
+          case "chat message":
+            generateUserMessage(element.msg, element.newUser, element.time);
+            break;
+          case "user changed name":
+            generateUserChangedName(element.newUser, element.time);
+            break;
+        }
+      }
+    })
+
+    socket.on("update room user counts", (currentRooms)=>{
+      for (let room of currentRooms){
+        document.getElementById(room.name + "-usercount").innerHTML = room.currentUsers.length + (room.currentUsers.length === 1 ? " user " : " users ")
+      }
+    })
+
+    socket.on("motd", (str)=>{
+      let li = document.createElement("li");
+      li.innerHTML = "<li class=\"connection-message\"><strong>"+str+"</strong></li>"
+      document.getElementById("messages").appendChild(li);
+      document.getElementById("messages").scrollTop = document.getElementById("messages").scrollHeight - document.getElementById("messages").clientHeight;
+    })
+
+    socket.on("update room name", (roomName)=>{
+      document.getElementById("channel-name-header").innerHTML = "#"+roomName;
+    })
+  </script>
+
+  <!--helper functions for generating text-->
+  <script>
+    let generateUserJoin = (newUser, time=0)=>{
+      console.log("user joined");
+      let li = document.createElement("li");
+      let currentTime = new Date().toLocaleTimeString();
+      li.innerHTML = "<li class=\"connection-message\"><span class=\"msg-time\">" + (time===0 ? currentTime : time)+ " </span></br>"+(newUser.name ? newUser.name : newUser.id)+ " has connected. </li>"
+      document.getElementById("messages").appendChild(li);
+      document.getElementById("messages").scrollTop = document.getElementById("messages").scrollHeight - document.getElementById("messages").clientHeight;
+    }
+
+    let generateUserLeave = (newUser, time=0)=>{
+      let li = document.createElement("li");
+      let currentTime = new Date().toLocaleTimeString();
+      li.innerHTML = "<li class=\"connection-message\"><span class=\"msg-time\">" + (time===0 ? currentTime : time) + " </span></br>"+(newUser.name ? newUser.name : newUser.id)+ " has disconnected. </li>"
+      document.getElementById("messages").appendChild(li);
+      document.getElementById("messages").scrollTop = document.getElementById("messages").scrollHeight - document.getElementById("messages").clientHeight;
+    }
+
+    let generateUserChangedName = (newUser, time=0)=>{
+      let li = document.createElement("li");
+      let currentTime = new Date().toLocaleTimeString();
+      li.innerHTML = "<li class=\"connection-message\"><span class=\"msg-time\">" + (time===0 ? currentTime : time) + " </span></br>" + newUser.id + " has changed their name to " + newUser.name + ".</li>"
+      document.getElementById("messages").appendChild(li);
+      document.getElementById("messages").scrollTop = document.getElementById("messages").scrollHeight - document.getElementById("messages").clientHeight;
+    }
+
+    let generateUserMessage = (msg, newUser, time=0)=>{
+      let ul = document.getElementById("messages");
+      let li = document.createElement("li");
+      let currentTime = new Date().toLocaleTimeString();
+      console.log(currentTime);
+      li.innerHTML += "<li><span class=\"msg-time\">" + (time===0 ? currentTime : time) + " </span></br><span class=\"msg-username\">" + (newUser.name ? newUser.name : newUser.id) +":</span><span class=\"msg-msg\"> " + msg + "</span></li>"
+      //li.append(socketID + ": ");
+      //li.append(msg);
+      //li.style.cssText use a ternary operator or something to alternate this between two different colors
+      // work on the rest of the css tmrw
+      ul.appendChild(li);
+
+      // scroll to bottom of the element
+      document.getElementById("messages").scrollTop = document.getElementById("messages").scrollHeight - document.getElementById("messages").clientHeight;
+    }
+
+    let generateRoomJoinMessage = (newUser, roomName, time=0)=>{
+      let li = document.createElement("li");
+      let currentTime = new Date().toLocaleTimeString();
+      li.innerHTML = "<li class=\"connection-message\"><span class=\"msg-time\">" + (time===0 ? currentTime : time) + " </span></br>" + (newUser.name ? newUser.name : newUser.id) + " has joined room " + roomName + ".</li>"
+      document.getElementById("messages").appendChild(li);
+      document.getElementById("messages").scrollTop = document.getElementById("messages").scrollHeight - document.getElementById("messages").clientHeight;
+
+    }
+
+  </script>
+
+  <script>
+    function enterSubmit(event){
+      if(event.key === "Enter"){
+        msgSubmit();
+        return;
+      }
+    }
+  </script>
+  
+  <body onload="init();">
+    <h1>chatapp</h1>
+    <div id="message-div" class="message-div">
+      <h3 id="channel-name-header" class="channel-name-header">test</h1>
+      <ul id="messages" class="messages"></ul>
+      
+      <form id="chat-form" action="" onkeypress="return enterSubmit(event)">
+        <input class="chat-form-textbox" id="chattextbox" oninput="" autocomplete="off" />
+        <button class="chat-form-button" type="button" onclick="msgSubmit()">Send</button> 
+        <!--<button type="submit" onclick="test()">Send</button>-->
+      </form>
+      <div id="typing-div"></br></div>
+    </div>
+
+    <div class="info-div">
+      <div class="current-users">
+        <ul class="current-users-ul" id="current-users"><span id="current-users-onlineusers" style="font-weight: bold">Online Users</span></ul>
+      </div>
+      
+      <div id="room-div" class="room-div">
+        
+        <ul id="room-div-ul" class="room-div-ul">
+          <span style="font-weight: bold">Rooms</span>
+          <li id="room-1" name="General">[General] Pop: <span id="General-usercount"></span><a class="room-connect" onclick="return roomSelect('General')">Connect</a></li>
+          <li id="room-2" name="Other">[Other] Pop: <span id="Other-usercount"></span><a class="room-connect" onclick="return roomSelect('Other')">Connect</a></li>
+        </ul>
+      </div>
+   </div>
+  
+  </body>
+</html>

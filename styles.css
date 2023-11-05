@@ -1,0 +1,91 @@
+html{
+  background-color: rgb(96, 228, 240);
+  font-family: 'Segoe UI';
+}
+
+.message-div{
+  float: left;
+}
+
+.messages{
+  list-style-type: none;
+  padding-left: 0;
+  height: 50%;
+  width: 250px;
+  overflow-y: auto;
+  overflow-wrap: break-word;
+}
+
+.msg-username{
+  font-weight: bold;
+  color: red;
+}
+
+.msg-time{
+  font-weight: lighter;
+  font-style: italic;
+  font-size: 12px;
+}
+
+.typing-div{
+  font-size: 8px;
+}
+
+.current-users{
+  padding-left: 20px;
+  float: right;
+}
+
+.current-users current-users-ul{
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+  padding-left: 20px;
+}
+
+.room-div{
+  float: right;
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+  padding-right: 58px;
+  /*word-break: break-all;*/
+}
+
+.connection-message{
+  font-style: italic;
+  font-size: 12px;
+}
+
+.chat-form-button{
+  background-color: white;
+  border: 1px solid white;
+  border-radius: 12px;
+  padding: 5px;
+  transition: background-color 0.25s;
+}
+
+.chat-form-button:hover{
+  background-color: rgb(222,222,222)
+}
+
+.chat-form-button:active{
+  background-color: rgb(168, 167, 167)
+}
+
+
+.chat-form-textbox{
+  padding: 5px;
+  border: 1px solid white;
+  border-radius: 12px;
+}
+
+.room-connect{
+  border: 1px solid rgb(168, 167, 167);
+  background-color: white;
+  transition: background-color 0.25s;
+}
+
+.room-connect:hover{
+  cursor: pointer;
+  background-color: rgb(222,222,222);
+}
+
